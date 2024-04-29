@@ -64,7 +64,8 @@ def train_model(model, train_loader, val_loader, num_epochs=5, learning_rate=0.0
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    #optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     for epoch in range(num_epochs):
         print(f"Epoch {epoch+1}/{num_epochs}")
@@ -121,6 +122,7 @@ def train_model(model, train_loader, val_loader, num_epochs=5, learning_rate=0.0
         val_epoch_acc = val_running_corrects.double() / len(val_loader.dataset)
 
         print(f"Val Loss: {val_epoch_loss:.4f} Acc: {val_epoch_acc:.4f}")
+    #torch.save(model.state_dict(), './torchmodel.pth')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -128,10 +130,10 @@ if __name__ == "__main__":
     )
     parser.add_argument("input_file", type=str, help="Path to Skyview dataset")
     parser.add_argument(
-        "--batch_size", type=int, default=32, help="Batch size (default: 32)"
+        "--batch_size", type=int, default=10, help="Batch size (default: 32)"
     )
     parser.add_argument(
-        "--num_epochs", type=int, default=7, help="Number of epochs (default: 7)"
+        "--num_epochs", type=int, default=16, help="Number of epochs (default: 7)"
     )
     parser.add_argument(
         "--val_split",
@@ -160,7 +162,7 @@ if __name__ == "__main__":
     # Split dataset into train and validation sets
     val_size = int(len(dataset) * args.val_split)
     train_size = len(dataset) - val_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42))
 
     # Define data loaders
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
